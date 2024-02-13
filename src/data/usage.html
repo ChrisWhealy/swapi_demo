@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+  <h1>Star Wars Data API</h1>
+  <h2>Data categories</h2>
+  <ul>
+    <li> <tt><a href="/films">/films</a></tt> </li>
+    <li> <tt><a href="/people">/people</a></tt> </li>
+    <li> <tt><a href="/planets">/planets</a></tt> </li>
+    <li> <tt><a href="/species">/species</a></tt> </li>
+    <li> <tt><a href="/starships">/starships</a></tt> </li>
+    <li> <tt><a href="/vehicles">/vehicles</a></tt> </li>
+  </ul>
+  </p>
+
+  <h2>Sort By</h2>
+  <p>Each data category has its own set of fields by which that dataset can be sorted:
+  <ul>
+    <li><tt>localhost:3000/films</tt>
+      <ul>
+        <li><tt>sortBy=title</tt></li>
+        <li><tt>sortBy=director</tt></li>
+        <li><tt>sortBy=episode</tt></li>
+      </ul>
+    </li>
+    <li><tt>localhost:3000/people</tt>
+      <ul>
+        <li><tt>sortBy=name</tt></li>
+        <li><tt>sortBy=homeworld</tt></li>
+        <li><tt>sortBy=height</tt></li>
+      </ul>
+    </li>
+    <li><tt>localhost:3000/planets</tt>
+      <ul>
+        <li><tt>sortBy=name</tt></li>
+        <li><tt>sortBy=rotation</tt></li>
+        <li><tt>sortBy=orbit</tt></li>
+      </ul>
+    </li>
+    <li><tt>localhost:3000/species</tt>
+      <ul>
+        <li><tt>sortBy=name</tt></li>
+        <li><tt>sortBy=language</tt></li>
+        <li><tt>sortBy=height</tt></li>
+        <li><tt>sortBy=lifespan</tt></li>
+      </ul>
+    </li>
+    <li><tt>localhost:3000/starships</tt>
+      <ul>
+        <li><tt>sortBy=name</tt></li>
+        <li><tt>sortBy=cost</tt></li>
+        <li><tt>sortBy=length</tt></li>
+      </ul>
+    </li>
+    <li><tt>localhost:3000/vehicles</tt>
+      <ul>
+        <li><tt>sortBy=name</tt></li>
+        <li><tt>sortBy=cost</tt></li>
+        <li><tt>sortBy=length</tt></li>
+        <li><tt>sortBy=manufacturer</tt></li>
+      </ul>
+    </li>
+  </ul>
+  </p>
+
+  <h2>Sort Direction</h2>
+  <p>Unless stated otherwise, all data is sorted by name (or title) in ascending order.</p>
+  <p>The sort order can be specified explcitly by adding the query string parameter <tt>sortDir=asc</tt> or reversed by
+    adding <tt>sortDir=desc</tt>.</p>
+</body>
+
+</html>
