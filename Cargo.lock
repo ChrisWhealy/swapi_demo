@@ -962,7 +962,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "swapi"
+name = "swapi_demo"
 version = "0.1.0"
 dependencies = [
  "actix-web",

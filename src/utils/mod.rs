@@ -127,10 +127,7 @@ pub type Sorter<T> = fn(s1: &T, s2: &T) -> std::cmp::Ordering;
 
 fn str_to_f64(s: &str) -> f64 {
     // Check for embedded thousands separator
-    match s.replace(&[',', ' '], "").parse::<f64>() {
-        Ok(f) => f,
-        Err(_) => std::f64::INFINITY,
-    }
+    s.replace(&[',', ' '], "").parse::<f64>().unwrap_or_else(|_| std::f64::INFINITY)
 }
 
 pub fn compare_nums<N>(n1: N, n2: N) -> Ordering

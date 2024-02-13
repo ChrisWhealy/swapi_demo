@@ -18,7 +18,7 @@ pub struct Vehicle {
     #[serde(rename = "cost_in_credits")]
     pub cost: String,
     pub length: String,
-    pub max_atmosphering_speed: String,  //Yes, "atmosphering" is not a real word...
+    pub max_atmosphering_speed: String,  //Yes I know, "atmosphering" is not a real word...
     pub crew: String,
     pub passengers: String,
     pub cargo_capacity: String,
