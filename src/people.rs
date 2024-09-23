@@ -4,6 +4,7 @@ use crate::{
     SwapiResponse, SwapiType,
 };
 use reqwest::Error;
+use crate::macros::gen_fetch_fn;
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct Person {
@@ -43,28 +44,4 @@ impl Person {
     }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pub async fn fetch_people(url: &str) -> Result<Option<SwapiResponse<Person>>, Error> {
-    let mut page = reqwest::get(url)
-        .await?
-        .json::<SwapiResponse<Person>>()
-        .await?;
-
-    let mut response: SwapiResponse<Person> = SwapiResponse::<Person> {
-        count: page.count,
-        next: None,
-        _previous: None,
-        results: page.results,
-    };
-
-    while page.next.is_some() {
-        page = reqwest::get(page.next.clone().unwrap())
-            .await?
-            .json::<SwapiResponse<Person>>()
-            .await?;
-
-        response.results.append(&mut page.results)
-    }
-
-    Ok(Some(response))
-}
+gen_fetch_fn!("people", Person);

@@ -1,3 +1,4 @@
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 macro_rules! gen_handler_fn {
     ($name:literal,  $key_field:literal, $swapi_type:ty, $path:expr) => {
         ::paste::paste! {
@@ -28,6 +29,39 @@ macro_rules! gen_handler_fn {
     };
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+macro_rules! gen_fetch_fn {
+    ($name:literal, $swapi_type:ty) => {
+        ::paste::paste! {
+            pub async fn [<fetch_ $name>](url: &str) -> Result<Option<SwapiResponse<$swapi_type>>, Error> {
+                let mut page = reqwest::get(url)
+                    .await?
+                    .json::<SwapiResponse<$swapi_type>>()
+                    .await?;
+            
+                let mut response: SwapiResponse<$swapi_type> = SwapiResponse::<$swapi_type> {
+                    count: page.count,
+                    next: None,
+                    _previous: None,
+                    results: page.results,
+                };
+            
+                while page.next.is_some() {
+                    page = reqwest::get(page.next.clone().unwrap())
+                        .await?
+                        .json::<SwapiResponse<$swapi_type>>()
+                        .await?;
+            
+                    response.results.append(&mut page.results)
+                }
+            
+                Ok(Some(response))
+            }
+        }
+    };
+}
+
 pub(crate) use {
-    gen_handler_fn
+    gen_handler_fn,
+    gen_fetch_fn,
 };

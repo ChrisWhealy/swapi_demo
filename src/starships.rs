@@ -4,6 +4,7 @@ use crate::{
     SwapiResponse, SwapiType,
 };
 use reqwest::Error;
+use crate::macros::gen_fetch_fn;
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct Starship {
@@ -46,28 +47,4 @@ impl Starship {
     }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pub async fn fetch_starships(url: &str) -> Result<Option<SwapiResponse<Starship>>, Error> {
-    let mut page = reqwest::get(url)
-        .await?
-        .json::<SwapiResponse<Starship>>()
-        .await?;
-
-    let mut response: SwapiResponse<Starship> = SwapiResponse::<Starship> {
-        count: page.count,
-        next: None,
-        _previous: None,
-        results: page.results,
-    };
-
-    while page.next.is_some() {
-        page = reqwest::get(page.next.clone().unwrap())
-            .await?
-            .json::<SwapiResponse<Starship>>()
-            .await?;
-
-        response.results.append(&mut page.results)
-    }
-
-    Ok(Some(response))
-}
+gen_fetch_fn!("starships", Starship);

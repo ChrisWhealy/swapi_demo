@@ -3,6 +3,7 @@ use crate::{
     SwapiResponse, SwapiType,
 };
 use reqwest::Error;
+use crate::macros::gen_fetch_fn;
 use crate::sort::compare_strs_as_f64s;
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
@@ -43,28 +44,4 @@ impl Vehicle {
     }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-pub async fn fetch_vehicles(url: &str) -> Result<Option<SwapiResponse<Vehicle>>, Error> {
-    let mut page = reqwest::get(url)
-        .await?
-        .json::<SwapiResponse<Vehicle>>()
-        .await?;
-
-    let mut response: SwapiResponse<Vehicle> = SwapiResponse::<Vehicle> {
-        count: page.count,
-        next: None,
-        _previous: None,
-        results: page.results,
-    };
-
-    while page.next.is_some() {
-        page = reqwest::get(page.next.clone().unwrap())
-            .await?
-            .json::<SwapiResponse<Vehicle>>()
-            .await?;
-
-        response.results.append(&mut page.results)
-    }
-
-    Ok(Some(response))
-}
+gen_fetch_fn!("vehicles", Vehicle);
