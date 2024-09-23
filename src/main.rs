@@ -1,79 +1,103 @@
-mod config;
 mod films;
 mod people;
 mod planets;
+mod sort;
 mod species;
 mod starships;
 mod vehicles;
-
-mod utils;
+mod macros;
 
 use actix_web::{get, http::header::ContentType, web, App, HttpResponse, HttpServer, Responder};
-use serde::Deserialize;
+use std::sync::Mutex;
 
 use films::*;
 use people::*;
 use planets::*;
-use species::*;
 use starships::*;
+use species::*;
 use vehicles::*;
+use macros::*;
 
-use config::*;
-use utils::*;
+const SELF_HOSTNAME: &str = "127.0.0.1";
+const SELF_PORT: u16 = 3000;
+const API_URL: &str = "https://swapi.py4e.com/api/";
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 pub trait SwapiType {}
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct SwapiResponse<T>
 where
     T: SwapiType,
 {
-    #[serde(rename = "count")]
-    _count: u32,
-    #[serde(rename = "next")]
-    _next: Option<String>,
+    count: u32,
+    next: Option<String>,
     #[serde(rename = "previous")]
     _previous: Option<String>,
-    pub results: Vec<T>,
+    results: Vec<T>,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Root path handler
+#[derive(Debug, Clone, serde::Deserialize)]
+struct QueryString {
+    #[serde(rename = "sortBy")]
+    sort_by: Option<String>,
+    #[serde(rename = "sortOrder")]
+    sort_order: Option<String>,
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Mutable shared cache
+pub struct SwapiCache {
+    pub films: Mutex<Vec<Film>>,
+    pub species: Mutex<Vec<Species>>,
+    pub starships: Mutex<Vec<Starship>>,
+    pub people: Mutex<Vec<Person>>,
+    pub planets: Mutex<Vec<Planet>>,
+    pub vehicles: Mutex<Vec<Vehicle>>,
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #[get("/")]
 async fn get_index() -> impl Responder {
     HttpResponse::Ok()
         .content_type(ContentType::html())
-        .body(include_str!("./data/usage.html"))
+        .body(include_str!("./assets/usage.html"))
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Generate path handlers
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-gen_handler_fn!("films", "title", Film, SWAPI_FILMS, "/films");
-gen_handler_fn!("people", "name", Person, SWAPI_PEOPLE, "/people");
-gen_handler_fn!("planets", "name", Planet, SWAPI_PLANETS, "/planets");
-gen_handler_fn!("species", "name", Species, SWAPI_SPECIES, "/species");
-gen_handler_fn!("starships", "name", Starship, SWAPI_STARSHIPS, "/starships");
-gen_handler_fn!("vehicles", "name", Vehicle, SWAPI_VEHICLES, "/vehicles");
+// Generate handler functions
+gen_handler_fn!("films", "episode_id", Film, "/films");
+gen_handler_fn!("people", "name", Person, "/people");
+gen_handler_fn!("planets", "name", Planet, "/planets");
+gen_handler_fn!("species", "name", Species, "/species");
+gen_handler_fn!("starships", "name", Starship, "/starships");
+gen_handler_fn!("vehicles", "name", Vehicle, "/vehicles");
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Start server
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let cache = web::Data::new(SwapiCache {
+        films: Mutex::new(vec![]),
+        species: Mutex::new(vec![]),
+        starships: Mutex::new(vec![]),
+        people: Mutex::new(vec![]),
+        planets: Mutex::new(vec![]),
+        vehicles: Mutex::new(vec![]),
+    });
+
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(get_config()))
+            .app_data(cache.clone())
             .service(get_index)
-            .service(get_films)
-            .service(get_people)
-            .service(get_planets)
-            .service(get_species)
-            .service(get_starships)
-            .service(get_vehicles)
+            .service(handle_films)
+            .service(handle_people)
+            .service(handle_planets)
+            .service(handle_species)
+            .service(handle_starships)
+            .service(handle_vehicles)
     })
-    .bind(("0.0.0.0", 3000))?
-    .run()
-    .await
+        .bind((SELF_HOSTNAME, SELF_PORT))?
+        .run()
+        .await
 }

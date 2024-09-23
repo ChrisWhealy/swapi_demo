@@ -1,16 +1,11 @@
+use crate::sort::compare_strs_as_f64s;
 use crate::{
-    utils::{compare_strs, compare_strs_as_f64s},
-    SwapiType,
-    gen_str_sort_fn,
-    gen_num_str_sort_fn
+    sort::{compare_strs, Sorter},
+    SwapiResponse, SwapiType,
 };
+use reqwest::Error;
 
-use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-
-pub static SWAPI_PEOPLE: &str = include_str!("./data/people.json");
-
-#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct Person {
     pub name: String,
     pub height: String,
@@ -20,7 +15,8 @@ pub struct Person {
     pub eye_color: String,
     pub birth_year: String,
     pub gender: String,
-    pub homeworld: String,
+    #[serde(rename = "homeworld")]
+    pub home_world: String,
     pub films: Vec<String>,
     pub species: Vec<String>,
     pub vehicles: Vec<String>,
@@ -33,7 +29,42 @@ pub struct Person {
 impl SwapiType for Person {}
 
 impl Person {
-    gen_str_sort_fn!(name, Person);
-    gen_str_sort_fn!(homeworld, Person);
-    gen_num_str_sort_fn!(height, Person);
+    pub fn sort_by(field: &str, order: &str) -> Sorter<Person> {
+        match (field, order) {
+            ("height", "desc") => |s1: &Person, s2: &Person| compare_strs_as_f64s(&s1.height, &s2.height).reverse(),
+            ("height", "asc") => |s1: &Person, s2: &Person| compare_strs_as_f64s(&s1.height, &s2.height),
+            ("mass", "desc") => |s1: &Person, s2: &Person| compare_strs_as_f64s(&s1.mass, &s2.mass).reverse(),
+            ("mass", "asc") => |s1: &Person, s2: &Person| compare_strs_as_f64s(&s1.mass, &s2.mass),
+
+            // Default to sorting by name
+            (_, "desc") => |s1: &Person, s2: &Person| compare_strs(&s1.name, &s2.name).reverse(),
+            (_, _) => |s1: &Person, s2: &Person| compare_strs(&s1.name, &s2.name)
+        }
+    }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+pub async fn fetch_people(url: &str) -> Result<Option<SwapiResponse<Person>>, Error> {
+    let mut page = reqwest::get(url)
+        .await?
+        .json::<SwapiResponse<Person>>()
+        .await?;
+
+    let mut response: SwapiResponse<Person> = SwapiResponse::<Person> {
+        count: page.count,
+        next: None,
+        _previous: None,
+        results: page.results,
+    };
+
+    while page.next.is_some() {
+        page = reqwest::get(page.next.clone().unwrap())
+            .await?
+            .json::<SwapiResponse<Person>>()
+            .await?;
+
+        response.results.append(&mut page.results)
+    }
+
+    Ok(Some(response))
 }

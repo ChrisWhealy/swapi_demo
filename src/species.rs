@@ -1,28 +1,21 @@
 use crate::{
-    utils::{compare_strs, compare_strs_as_f64s},
-    SwapiType,
-    gen_str_sort_fn,
-    gen_num_str_sort_fn
+    sort::{compare_strs, Sorter},
+    SwapiResponse, SwapiType,
 };
+use reqwest::Error;
+use crate::sort::compare_strs_as_f64s;
 
-use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-
-pub static SWAPI_SPECIES: &str = include_str!("./data/species.json");
-
-#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct Species {
     pub name: String,
     pub classification: String,
     pub designation: String,
-    #[serde(rename = "average_height")]
-    pub height: String,
+    pub average_height: String,
     pub skin_colors: String,
     pub hair_colors: String,
-    pub eye_colors: String,
-    #[serde(rename = "average_lifespan")]
-    pub lifespan: String,
-    pub homeworld: Option<String>,
+    pub average_lifespan: String,
+    #[serde(rename = "homeworld")]
+    pub home_world: Option<String>,
     pub language: String,
     pub people: Vec<String>,
     pub films: Vec<String>,
@@ -34,8 +27,42 @@ pub struct Species {
 impl SwapiType for Species {}
 
 impl Species {
-    gen_str_sort_fn!(name, Species);
-    gen_str_sort_fn!(language, Species);
-    gen_num_str_sort_fn!(height, Species);
-    gen_num_str_sort_fn!(lifespan, Species);
+    pub fn sort_by(field: &str, order: &str) -> Sorter<Species> {
+        match (field, order) {
+            ("height", "desc") => |s1: &Species, s2: &Species| compare_strs_as_f64s(&s1.average_height, &s2.average_height).reverse(),
+            ("height", "asc") => |s1: &Species, s2: &Species| compare_strs_as_f64s(&s1.average_height, &s2.average_height),
+            ("lifespan", "desc") => |s1: &Species, s2: &Species| compare_strs_as_f64s(&s1.average_lifespan, &s2.average_lifespan).reverse(),
+            ("lifespan", "asc") => |s1: &Species, s2: &Species| compare_strs_as_f64s(&s1.average_lifespan, &s2.average_lifespan),
+
+            // Default to sorting by name
+            (_, "desc") => |s1: &Species, s2: &Species| compare_strs(&s1.name, &s2.name).reverse(),
+            (_, _) => |s1: &Species, s2: &Species| compare_strs(&s1.name, &s2.name),
+        }
+    }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+pub async fn fetch_species(url: &str) -> Result<Option<SwapiResponse<Species>>, Error> {
+    let mut page = reqwest::get(url)
+        .await?
+        .json::<SwapiResponse<Species>>()
+        .await?;
+
+    let mut response: SwapiResponse<Species> = SwapiResponse::<Species> {
+        count: page.count,
+        next: None,
+        _previous: None,
+        results: page.results,
+    };
+
+    while page.next.is_some() {
+        page = reqwest::get(page.next.clone().unwrap())
+            .await?
+            .json::<SwapiResponse<Species>>()
+            .await?;
+
+        response.results.append(&mut page.results)
+    }
+
+    Ok(Some(response))
 }

@@ -1,16 +1,11 @@
+use crate::sort::compare_strs_as_f64s;
 use crate::{
-    utils::{compare_strs, compare_strs_as_f64s},
-    SwapiType,
-    gen_str_sort_fn,
-    gen_num_str_sort_fn
+    sort::{compare_strs, Sorter},
+    SwapiResponse, SwapiType,
 };
+use reqwest::Error;
 
-use serde::{Deserialize, Serialize};
-use std::cmp::Ordering;
-
-pub static SWAPI_STARSHIPS: &str = include_str!("./data/starships.json");
-
-#[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct Starship {
     pub name: String,
     pub model: String,
@@ -37,7 +32,42 @@ pub struct Starship {
 impl SwapiType for Starship {}
 
 impl Starship {
-    gen_str_sort_fn!(name, Starship);
-    gen_num_str_sort_fn!(cost, Starship);
-    gen_num_str_sort_fn!(length, Starship);
+    pub fn sort_by(field: &str, order: &str) -> Sorter<Starship> {
+        match (field, order) {
+            ("length", "desc") => |s1: &Starship, s2: &Starship| compare_strs_as_f64s(&s1.length, &s2.length).reverse(),
+            ("length", "asc") => |s1: &Starship, s2: &Starship| compare_strs_as_f64s(&s1.length, &s2.length),
+            ("cost", "desc") => |s1: &Starship, s2: &Starship| compare_strs_as_f64s(&s1.cost, &s2.cost).reverse(),
+            ("cost", "asc") => |s1: &Starship, s2: &Starship| compare_strs_as_f64s(&s1.cost, &s2.cost),
+
+            // Default to sorting by name
+            (_, "desc") => |s1: &Starship, s2: &Starship| compare_strs(&s1.name, &s2.name).reverse(),
+            (_, _) => |s1: &Starship, s2: &Starship| compare_strs(&s1.name, &s2.name)
+        }
+    }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+pub async fn fetch_starships(url: &str) -> Result<Option<SwapiResponse<Starship>>, Error> {
+    let mut page = reqwest::get(url)
+        .await?
+        .json::<SwapiResponse<Starship>>()
+        .await?;
+
+    let mut response: SwapiResponse<Starship> = SwapiResponse::<Starship> {
+        count: page.count,
+        next: None,
+        _previous: None,
+        results: page.results,
+    };
+
+    while page.next.is_some() {
+        page = reqwest::get(page.next.clone().unwrap())
+            .await?
+            .json::<SwapiResponse<Starship>>()
+            .await?;
+
+        response.results.append(&mut page.results)
+    }
+
+    Ok(Some(response))
 }

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+<h1>Star Wars Data API</h1>
+<h2>Data categories</h2>
+<ul>
+    <li><code><a href="/films">/films</a></code></li>
+    <li><code><a href="/people">/people</a></code></li>
+    <li><code><a href="/planets">/planets</a></code></li>
+    <li><code><a href="/species">/species</a></code></li>
+    <li><code><a href="/starships">/starships</a></code></li>
+    <li><code><a href="/vehicles">/vehicles</a></code></li>
+</ul>
+
+<h2>Sort By</h2>
+<p>Each data category has its own set of fields by which that dataset can be sorted:</p>
+<ul>
+    <li><code>localhost:3000/films</code>
+        <table>
+            <tr>
+                <td><code>sortBy=episode_id</code></td>
+                <td>Default</td>
+            </tr>
+            <tr>
+                <td><code>sortBy=title</code></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>sortBy=release_date</code></td>
+                <td></td>
+            </tr>
+        </table>
+    </li>
+    <li><code>localhost:3000/people</code>
+        <table>
+            <tr>
+                <td><code>sortBy=name</code></td>
+                <td>Default</td>
+            </tr>
+            <tr>
+                <td><code>sortBy=height</code></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>sortBy=mass</code></td>
+                <td></td>
+            </tr>
+        </table>
+    </li>
+    <li><code>localhost:3000/planets</code>
+        <table>
+            <tr>
+                <td><code>sortBy=name</code></td>
+                <td>Default</td>
+            </tr>
+            <tr>
+                <td><code>sortBy=diameter</code></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>sortBy=population</code></td>
+                <td></td>
+            </tr>
+        </table>
+    </li>
+    <li><code>localhost:3000/species</code>
+        <table>
+            <tr>
+                <td><code>sortBy=name</code></td>
+                <td>Default</td>
+            </tr>
+            <tr>
+                <td><code>sortBy=height</code></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>sortBy=lifespan</code></td>
+                <td></td>
+            </tr>
+        </table>
+    </li>
+    <><code>localhost:3000/starships</code>
+    <table>
+        <tr>
+            <td><code>sortBy=name</code></td>
+            <td>Default</td>
+        </tr>
+        <tr>
+            <td><code>sortBy=cost</code></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><code>sortBy=length</code></td>
+            <td></td>
+        </tr>
+    </table>
+    </li>
+    <li><code>localhost:3000/vehicles</code>
+        <table>
+            <tr>
+                <td><code>sortBy=name</code></td>
+                <td>Default</td>
+            </tr>
+            <tr>
+                <td><code>sortBy=cost</code></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>sortBy=length</code></td>
+                <td></td>
+            </tr>
+        </table>
+    </li>
+</ul>
+
+<h2>Sort Order</h2>
+<p>By default, all data is sorted in ascending order.</p>
+<p>The sort order can be specified explicitly by adding the query string parameter <code>sortOrder=asc</code> or
+    reversed by
+    adding <code>sortOrder=desc</code>.</p>
+</body>
+
+</html>
