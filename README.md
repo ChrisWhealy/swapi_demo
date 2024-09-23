@@ -1,6 +1,6 @@
 # REST-based API into Replicated Star Wars Data
 
-The <https://swapi.py4e.com> websiteis  REST API provides a wide variety of JSON-based information about the Star Wars films:
+The <https://swapi.py4e.com> website exposes a variety of JSON-based information about the Star Wars films:
 
 * Films
 * People
